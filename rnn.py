@@ -8,7 +8,7 @@ class RNN(object):
     	              in_var,target_var,
     	              pred,loss,updates):
         self.pred=theano.function([in_var], pred,allow_input_downcast=True,on_unused_input='warn')        
-        #self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
+        self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
         #self.updates=theano.function([in_var, target_var], loss, 
         #                       updates=updates,allow_input_downcast=True)
 
@@ -19,19 +19,19 @@ def build_rnn(hyper_params):
     def recurrence(x_t,h_state,U,V,W):
         h_t = T.nnet.sigmoid(T.dot(x_t, U) + T.dot(h_state, V) )
         s_t = T.nnet.softmax(T.dot(h_t, W))
-        return [h_t,s_t]#[s_t,h_t[0]]
+        return [h_t[0],s_t]#[s_t,h_t[0]]
 
-    [s,h], updates = theano.scan(
+    [h,s], updates = theano.scan(
             recurrence,
             sequences=in_var,
             outputs_info=[init_hidden_value(hyper_params),None],
             non_sequences=[U, V, W],
             n_steps=in_var.shape[0])
      
-    #o=T.argmax(T.sum(s))
-    prediction = T.stacklists([h])#T.argmax(o)#, axis=1)
-    loss = None
-    #loss=T.mean(T.nnet.categorical_crossentropy(h, target_var))#)
+    o=   T.argmax(T.sum(s,axis=0),axis=1)
+    prediction = o
+    #loss = None
+    loss=T.mean(T.nnet.categorical_crossentropy(prediction, target_var))#)
     updates=None#simple_sgd(loss,hyper_params,[U,V,W])
     return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
 
@@ -45,7 +45,7 @@ def init_params(hyper_params):
     return U,V,W
 
 def init_variables():
-    in_var = T.lmatrix('in_var')
+    in_var = T.ltensor3('in_var')
     #in_var=T.lvector('in_var')
     target_var = T.lvector('target_var')
     return in_var,target_var	
