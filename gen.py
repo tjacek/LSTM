@@ -7,10 +7,14 @@ def make_abc(dataset_size=100,seq_size=20):
 def make_dataset(cats,dataset_size,seq_size):
     dataset=[]
     for i,cat_i in enumerate(cats):
-        dataset+=gen_data(cat_i,cat=i,size=dataset_size,max_size=seq_size)
+        dataset+=gen_fixed(cat_i,cat=i,size=dataset_size,max_size=seq_size)
     return dataset
 
-def gen_data(make_seq,cat=0,size=100,max_size=10):
+def gen_fixed(make_seq,cat=0,size=100,max_size=10):
+    return [ (cat,make_seq(max_size)) 
+                 for size_i in range(size)]
+
+def gen_uneven(make_seq,cat=0,size=100,max_size=10):
     sizes=[np.random.randint(3,max_size)
                for i in range(size)] 
     return [ (cat,make_seq(size_i)) 
@@ -23,13 +27,14 @@ def gen_abc(rn_size):
     return to_vectors(abc)
 
 def rand_gen(max_size):
-    size_i=np.random.randint(3,3*max_size)
+    max_size*=3
+    #size_i=np.random.randint(3,3*max_size)
     rand_seq=[np.random.randint(0,3) 
-                for i in range(size_i)]
+                for i in range(max_size)]
     return to_vectors(rand_seq)
 
-def to_vectors(seq):
-    size=max(seq)+1
+def to_vectors(seq,size=3):
+    #size=max(seq)+1
     vectors=[ind_vector(seq_i,size)
                for seq_i in seq]
     return np.array(vectors)
