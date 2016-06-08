@@ -9,8 +9,8 @@ class RNN(object):
     	              pred,loss,updates):
         self.pred=theano.function([in_var], pred,allow_input_downcast=True,on_unused_input='warn')        
         self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
-        #self.updates=theano.function([in_var, target_var], loss, 
-        #                       updates=updates,allow_input_downcast=True)
+        self.updates=theano.function([in_var, target_var], loss, 
+                               updates=updates,allow_input_downcast=True)
 
 def build_rnn(hyper_params):
     U, V, W = init_params(hyper_params)
@@ -32,7 +32,7 @@ def build_rnn(hyper_params):
     prediction = o
     #loss = None
     loss=T.mean(T.nnet.categorical_crossentropy(prediction, target_var))#)
-    updates=None#simple_sgd(loss,hyper_params,[U,V,W])
+    updates=simple_sgd(loss,hyper_params,[U,V,W])
     return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
 
 def init_params(hyper_params):
