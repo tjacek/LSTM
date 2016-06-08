@@ -27,11 +27,11 @@ def build_rnn(hyper_params):
             outputs_info=[init_hidden_value(hyper_params),None],
             non_sequences=[U, V, W],
             n_steps=in_var.shape[0])
-     
-    o=   T.argmax(T.sum(s,axis=0),axis=1)
-    prediction = o
+    
+    p_x= T.sum(s,axis=0)
+    prediction =  T.argmax(p_x,axis=1)
     #loss = None
-    loss=T.mean(T.nnet.categorical_crossentropy(prediction, target_var))#)
+    loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
     updates=simple_sgd(loss,hyper_params,[U,V,W])
     return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
 
@@ -61,4 +61,4 @@ def simple_sgd(loss,hyper_params,params):
     return updates
 
 def default_params():
-    return {'n_cats':3,'seq_dim':3,'hidden_dim':3,'learning_rate':0.01}
+    return {'n_cats':3,'seq_dim':3,'hidden_dim':3,'learning_rate':0.001}

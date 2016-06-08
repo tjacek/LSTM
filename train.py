@@ -13,7 +13,7 @@ def test():
 def get_dim(dataset,dim=0):
     return [pair_i[dim] for pair_i in dataset]
 
-def train_super(X,y,model,epochs=10):
+def train_super(X,y,model,epochs=100):
     x_batches=tools.get_batches(X)
     y_batches=tools.get_batches(y)
     for i in range(epochs):
