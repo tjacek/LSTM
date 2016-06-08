@@ -19,19 +19,19 @@ def build_rnn(hyper_params):
     def recurrence(x_t,h_state,U,V,W):
         h_t = T.nnet.sigmoid(T.dot(x_t, U) + T.dot(h_state, V) )
         s_t = T.nnet.softmax(T.dot(h_t, W))
-        return [s_t,h_t]#[s_t,h_t[0]]
+        return [h_t,s_t]#[s_t,h_t[0]]
 
     [s,h], updates = theano.scan(
             recurrence,
             sequences=in_var,
-            outputs_info=[None,init_hidden_value(hyper_params)],
+            outputs_info=[init_hidden_value(hyper_params),None],
             non_sequences=[U, V, W],
             n_steps=in_var.shape[0])
      
-    o=T.argmax(T.sum(s))
-    prediction = T.stacklists([o])#T.argmax(o)#, axis=1)
-    #loss = T.sum(
-    #loss=T.nnet.categorical_crossentropy(o, target_var)#)
+    #o=T.argmax(T.sum(s))
+    prediction = T.stacklists([h])#T.argmax(o)#, axis=1)
+    loss = None
+    #loss=T.mean(T.nnet.categorical_crossentropy(h, target_var))#)
     updates=None#simple_sgd(loss,hyper_params,[U,V,W])
     return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
 

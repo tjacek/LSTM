@@ -17,4 +17,7 @@ def get_batches(x,batch_size=5):
     n_batches=int(np.ceil(float(x.shape[0]) / float(batch_size)))
     return [x[i*batch_size:(i+1)*batch_size] 
                for i in range(n_batches)]
+
+def time_first(X):
+    return np.transpose(X, (1, 0, 2))
     
