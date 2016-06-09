@@ -9,6 +9,8 @@ def test():
     rnn_model=rnn.build_rnn(rnn.default_params())
     print("model created")
     train_super(X,y,rnn_model)
+    print("train")
+    check_model(X,y,rnn_model)
 
 def get_dim(dataset,dim=0):
     return [pair_i[dim] for pair_i in dataset]
@@ -23,5 +25,14 @@ def train_super(X,y,model,epochs=100):
             #print(model.pred(xt_i))
             print(model.loss(xt_i,y_i))
             print(model.updates(xt_i,y_i))
+    return model
+
+def check_model(X,y,model):
+    x_batches=tools.get_batches(X)
+    y_batches=tools.get_batches(y)
+    for i,y_i in enumerate(y_batches):
+        xt_i=tools.time_first(x_batches[i])
+        y_pred=model.pred(xt_i)
+        print(y_i==y_pred) 
 
 test()
