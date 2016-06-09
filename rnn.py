@@ -28,9 +28,8 @@ def build_rnn(hyper_params):
             non_sequences=[U, V, W],
             n_steps=in_var.shape[0])
     
-    p_x= T.sum(s,axis=0)
+    p_x= T.mean(s,axis=0)
     prediction =  T.argmax(p_x,axis=1)
-    #loss = None
     loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
     updates=simple_sgd(loss,hyper_params,[U,V,W])
     return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
@@ -46,7 +45,6 @@ def init_params(hyper_params):
 
 def init_variables():
     in_var = T.ltensor3('in_var')
-    #in_var=T.lvector('in_var')
     target_var = T.lvector('target_var')
     return in_var,target_var	
 
