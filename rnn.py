@@ -1,7 +1,7 @@
 import theano
 import theano.tensor as T
 import numpy as np 
-import tools,layer
+import tools,optim,layer
 
 class RNN(object):
     def __init__(self,hyper_params,
@@ -31,7 +31,7 @@ def build_rnn(hyper_params):
     p_x= T.mean(s,axis=0)
     prediction =  T.argmax(p_x,axis=1)
     loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
-    updates=simple_sgd(loss,hyper_params,[U,V,W])
+    updates=optim.momentum_sgd(loss,hyper_params,[U,V,W])
     return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
 
 def init_params(hyper_params):
@@ -51,12 +51,7 @@ def init_variables():
 def init_hidden_value(hyper_params,var_name='hidden_dim'):
     return T.zeros((hyper_params[var_name],),dtype=float)
 
-def simple_sgd(loss,hyper_params,params):
-    learning_rate=hyper_params['learning_rate']
-    diff=[ T.grad(loss, param_i) for param_i in params]
-    updates=[(param_i, param_i - learning_rate * diff_i)
-                for param_i,diff_i in zip(params,diff)]
-    return updates
 
 def default_params():
-    return {'n_cats':3,'seq_dim':3,'hidden_dim':3,'learning_rate':0.001}
+    return {'n_cats':3,'seq_dim':3,'hidden_dim':3,
+            'learning_rate':0.001,'momentum':0.9}
