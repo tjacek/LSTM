@@ -1,20 +1,22 @@
 import theano, theano.tensor as T
 import numpy as np
+import tools
 
 class Layer(object):
 
-    def __init__(self, input_size, hidden_size, activation=T.nnet.sigmoid):
-        self.input_size  = input_size
-        self.hidden_size = hidden_size
+    def __init__(self, hyper_params,W,b, activation=T.nnet.sigmoid):
+        self.hyper_params = hyper_params
+        self.w=W
+        self.b=b
         self.activation  = activation
-        self.create_variables()
 
-    def create_variables(self):
-        self.linear_matrix = tools.create_shared(self.hidden_size, self.input_size, name="Layer.linear_matrix")
-        self.bias_matrix   = tools.create_shared(self.hidden_size, name="Layer.bias_matrix")
+    def linear(self,x):
+        return T.dot(self.w*x)+self.b
+
+    def params(self):
+        return [self.w,self.b]
 
     def activate(self, x):
-
         if x.ndim > 1:
             return self.activation(
                 T.dot(self.linear_matrix, x.T) + self.bias_matrix[:,None] ).T
@@ -22,26 +24,14 @@ class Layer(object):
             return self.activation(
                 T.dot(self.linear_matrix, x) + self.bias_matrix )
 
-class RNN(Layer):
-    def __init__(self, *args, **kwargs):
-        super(RNN, self).__init__(*args, **kwargs)
-        self.is_recursive = True
+def create_layer(out_size,in_size,name="layer"):
+    linear_matrix = tools.create_shared(out_size, in_size, name="W_"+name)
+    bias_matrix   = tools.create_shared(in_size, name="b_"+name)
+    hyper_params={'hidden_size':out_size,'input_size':in_size}
+    return Layer(hyper_params,linear_matrix,bias_matrix)
 
-    def create_variables(self):
-        self.linear_matrix        = tools.create_shared(self.hidden_size, self.input_size+ self.hidden_size, name="RNN.linear_matrix")
-        self.bias_matrix          = tools.create_shared(self.hidden_size, name="RNN.bias_matrix")
-        self.initial_hidden_state = tools.create_shared(self.hidden_size, name="RNN.initial_hidden_state")
-
-    def activate(self, x, h):
-        if x.ndim > 1:
-            return self.activation(
-                T.dot(
-                    self.linear_matrix,
-                    T.concatenate([x, h], axis=1).T
-                ) + self.bias_matrix[:,None] ).T
-        else:
-            return self.activation(
-                T.dot(
-                    self.linear_matrix,
-                    T.concatenate([x, h])
-                ) + self.bias_matrix )
+def get_params(layers):
+    params=[]
+    for layer_i in layers:
+        params=layer_i.params()
+    return params    

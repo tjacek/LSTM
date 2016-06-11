@@ -17,8 +17,8 @@ def build_rnn(hyper_params):
     in_var,target_var=init_variables()
     
     def recurrence(x_t,h_state,U,V,W):
-        h_t = T.nnet.sigmoid(T.dot(x_t, U) + T.dot(h_state, V) )
-        s_t = T.nnet.softmax(T.dot(h_t, W))
+        h_t = T.nnet.sigmoid(U.linear(x_t) + V.linear(h_state) )
+        s_t = T.nnet.softmax(W.linear(h_t))
         return [h_t[0],s_t]#[s_t,h_t[0]]
 
     [h,s], updates = theano.scan(
@@ -31,16 +31,20 @@ def build_rnn(hyper_params):
     p_x= T.mean(s,axis=0)
     prediction =  T.argmax(p_x,axis=1)
     loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
-    updates=optim.momentum_sgd(loss,hyper_params,[U,V,W])
+    params=layer.get_params([U,V,W])
+    updates=optim.momentum_sgd(loss,hyper_params,params)
     return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
 
 def init_params(hyper_params):
     seq_dim=hyper_params['seq_dim']
     hidden_dim=hyper_params['hidden_dim']
     n_cats=hyper_params['n_cats']
-    U=tools.create_shared(out_size=hidden_dim, in_size=seq_dim, name='U')
-    V=tools.create_shared(out_size=hidden_dim, in_size=hidden_dim, name='V')
-    W=tools.create_shared(out_size=n_cats, in_size=hidden_dim, name='W')
+    #U=tools.create_shared(out_size=hidden_dim, in_size=seq_dim, name='U')
+    #V=tools.create_shared(out_size=hidden_dim, in_size=hidden_dim, name='V')
+    #W=tools.create_shared(out_size=n_cats, in_size=hidden_dim, name='W')
+    U=layer.create_layer(out_size=hidden_dim, in_size=seq_dim, name='U')
+    V=layer.create_layer(out_size=hidden_dim, in_size=hidden_dim, name='V')
+    W=layer.create_layer(out_size=n_cats, in_size=hidden_dim, name='W')
     return U,V,W
 
 def init_variables():
@@ -50,7 +54,6 @@ def init_variables():
 
 def init_hidden_value(hyper_params,var_name='hidden_dim'):
     return T.zeros((hyper_params[var_name],),dtype=float)
-
 
 def default_params():
     return {'n_cats':3,'seq_dim':3,'hidden_dim':3,
