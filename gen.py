@@ -7,17 +7,17 @@ def make_abc(dataset_size=100,seq_size=20):
 def make_dataset(cats,dataset_size,seq_size):
     dataset=[]
     for i,cat_i in enumerate(cats):
-        dataset+=gen_fixed(cat_i,cat=i,size=dataset_size,max_size=seq_size)
+        dataset+=gen_uneven(cat_i,cat=i,size=dataset_size,max_size=seq_size)
     return dataset
 
 def gen_fixed(make_seq,cat=0,size=100,max_size=10):
     return [ (cat,make_seq(max_size)) 
                  for size_i in range(size)]
 
-def gen_uneven(make_seq,cat=0,size=100,max_size=10):
+def gen_uneven(make_seq,cat=0,size=100,max_size=20):
     sizes=[np.random.randint(3,max_size)
                for i in range(size)] 
-    return [ (cat,make_seq(size_i)) 
+    return [ (cat,make_seq(3*size_i)) 
                  for size_i in sizes] 
 
 def gen_abc(rn_size):

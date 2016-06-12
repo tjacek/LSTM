@@ -11,7 +11,7 @@ class Layer(object):
         self.activation  = activation
 
     def linear(self,x):
-        return T.dot(self.w*x)+self.b
+        return T.dot(x,self.w)+self.b
 
     def params(self):
         return [self.w,self.b]
@@ -26,7 +26,7 @@ class Layer(object):
 
 def create_layer(out_size,in_size,name="layer"):
     linear_matrix = tools.create_shared(out_size, in_size, name="W_"+name)
-    bias_matrix   = tools.create_shared(in_size, name="b_"+name)
+    bias_matrix   = tools.create_shared(out_size, name="b_"+name)
     hyper_params={'hidden_size':out_size,'input_size':in_size}
     return Layer(hyper_params,linear_matrix,bias_matrix)
 
