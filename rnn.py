@@ -8,27 +8,27 @@ class RNN(object):
     	              in_var,target_var,
     	              pred,loss,updates):
         self.pred=theano.function([in_var], pred,allow_input_downcast=True,on_unused_input='warn')        
-        self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
-        self.updates=theano.function([in_var, target_var], loss, 
-                               updates=updates,allow_input_downcast=True)
+        #self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
+        #self.updates=theano.function([in_var, target_var], loss, 
+        #                       updates=updates,allow_input_downcast=True)
 
 class MaskRNN(object):
     def __init__(self,hyper_params,
                       in_var,target_var,mask_var,
                       pred,loss,updates):
         self.pred=theano.function([in_var,mask_var], pred,allow_input_downcast=True,on_unused_input='warn')        
-        self.loss=theano.function([in_var,target_var,mask_var], loss,allow_input_downcast=True)
-        self.updates=theano.function([in_var, target_var,mask_var], loss, 
-                               updates=updates,allow_input_downcast=True)
+        #self.loss=theano.function([in_var,target_var,mask_var], loss,allow_input_downcast=True)
+        #self.updates=theano.function([in_var, target_var,mask_var], loss, 
+        #                       updates=updates,allow_input_downcast=True)
 
 def build_rnn(hyper_params):
-    in_var,target_var=init_variables()
-    s,params=simple_rnn(hyper_params,in_var)
+    in_var,target_var,mask_var=init_variables(True)
+    s,params=mask_rnn(hyper_params,in_var,mask_var)
     p_x= T.mean(s,axis=0)
-    prediction =  T.argmax(p_x,axis=1)
-    loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
-    updates=optim.ada_grad(loss,hyper_params,params)
-    return RNN(hyper_params,in_var,target_var,prediction,loss,updates)
+    prediction =  s#T.argmax(p_x,axis=1)
+    loss=None#T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
+    updates=None#optim.ada_grad(loss,hyper_params,params)
+    return MaskRNN(hyper_params,in_var,target_var,mask_var,prediction,loss,updates)
 
 def simple_rnn(hyper_params,in_var):
     U, V, W = init_params(hyper_params)
@@ -57,7 +57,7 @@ def mask_rnn(hyper_params,in_var,mask_var):
             sequences=in_var,
             outputs_info=[init_hidden_value(hyper_params),None],
             n_steps=in_var.shape[0])
-    final=mask_var*s
+    final= mask_var*s#T.dot(mask_var,s)
     params=layer.get_params([U,V,W])
     return final,params
 
@@ -74,7 +74,7 @@ def init_variables(mask_var=False):
     in_var = T.ltensor3('in_var')
     target_var = T.lvector('target_var')
     if(mask_var):
-        mask_var= T.lvector('mask_var')
+        mask_var= T.ltensor3('mask_var')#T.lmatrix('mask_var')
         return in_var,target_var,mask_var
     return in_var,target_var	
 

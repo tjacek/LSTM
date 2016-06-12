@@ -43,7 +43,11 @@ def masked_dataset(seqs):
         return new_seq_i
     new_seqs=[rescale_seq(seq_i)
                 for seq_i in seqs]
-                
-    mask=[ [1]*len_i + [0]*(max_len-len_i)
+    
+    def make_mask(len_i,seq_i):
+        mask1D_i=[1]*len_i + [0]*(max_len-len_i)
+        mask2D_i=np.tile(mask1D_i,(seq_i.shape[1],1))            
+        return mask2D_i.T
+    mask=[ make_mask(len_i,seq_i)
            for len_i,seq_i in zip(lengths,seqs)]
     return np.array(new_seqs),np.array(mask)   
