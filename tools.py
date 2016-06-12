@@ -27,7 +27,10 @@ def ortho_weight(ndim):
     return u.astype('float32')
 
 def time_first(X):
-    return np.transpose(X, (1, 0, 2))
+    if(X.ndim==3):
+        return np.transpose(X, (1, 0, 2))
+    else:
+        return np.transpose(X,(1,0))
 
 def masked_dataset(seqs):
     lengths=[len(seq_i) for seq_i in seqs]
@@ -43,5 +46,4 @@ def masked_dataset(seqs):
                 
     mask=[ [1]*len_i + [0]*(max_len-len_i)
            for len_i,seq_i in zip(lengths,seqs)]
-    return np.array(new_seqs),np.array(mask)
-   
+    return np.array(new_seqs),np.array(mask)   
