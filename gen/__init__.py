@@ -28,13 +28,11 @@ def gen_abc(rn_size):
 
 def rand_gen(max_size):
     max_size*=3
-    #size_i=np.random.randint(3,3*max_size)
     rand_seq=[np.random.randint(0,3) 
                 for i in range(max_size)]
     return to_vectors(rand_seq)
 
 def to_vectors(seq,size=3):
-    #size=max(seq)+1
     vectors=[ind_vector(seq_i,size)
                for seq_i in seq]
     return np.array(vectors)
@@ -43,4 +41,3 @@ def ind_vector(k,size):
     vec=np.zeros((size,),dtype=float)
     vec[k]=1.0
     return vec
-#print(make_abc())
