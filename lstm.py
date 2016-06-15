@@ -5,7 +5,6 @@ import tools,layer
 def mask_lstm(hyper_params,in_var,mask_var):
     forget_gate,in_gate,cell_gate,out_gate=lstm_params(hyper_params)
     def recurrence(x_t,h_t,c_t):
-        #xh_t=T.concatenate([x_t1,h_t],axis=0)
         f_t=T.nnet.sigmoid(forget_gate.linear(x_t,h_t))
         i_t=T.nnet.sigmoid(in_gate.linear(x_t,h_t))
         c_t_prop=T.tanh(cell_gate.linear(x_t,h_t))
@@ -13,10 +12,10 @@ def mask_lstm(hyper_params,in_var,mask_var):
         o_t=T.nnet.sigmoid(out_gate.linear(x_t,h_t))
         h_t_next=o_t*T.tanh(c_t_next)
         out_t=T.nnet.softmax(h_t_next)
-        return [h_t_next,c_t_next,out_t]
+        return [h_t,c_t,out_t]
     
-    start_cell=T.zeros( (hyper_params['cell_dim'],in_var.shape[1]))
-    start_hidden=T.zeros( (hyper_params['hidden_dim'],in_var.shape[1]))
+    start_cell=T.zeros( (in_var.shape[1], hyper_params['cell_dim']),dtype=float)
+    start_hidden=T.zeros( (in_var.shape[1],hyper_params['hidden_dim']), dtype=float)
     [h,c,s], updates = theano.scan(
             recurrence,
             sequences=in_var,
@@ -30,11 +29,11 @@ def lstm_params(hyper_params):
     input_dim=hyper_params['seq_dim']
     hidden_dim=hyper_params['hidden_dim']
     cell_dim=hyper_params['cell_dim']
-    con_dim=input_dim+hidden_dim
-    forget_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim,name='forgot')
-    in_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim,name='in')
-    cell_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim, name='cell')
-    out_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim, name='out')
+    #con_dim=input_dim+hidden_dim
+    forget_gate=layer.create_gate(out_size=cell_dim, x_size=input_dim, h_size=input_dim,name='forgot')
+    in_gate=layer.create_gate(out_size=cell_dim, x_size=input_dim, h_size=input_dim,name='in')
+    cell_gate=layer.create_gate(out_size=cell_dim, x_size=input_dim, h_size=input_dim, name='cell')
+    out_gate=layer.create_gate(out_size=cell_dim, x_size=input_dim, h_size=input_dim, name='out')
     return forget_gate,in_gate,cell_gate,out_gate
 
 def default_params():
