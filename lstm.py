@@ -4,13 +4,13 @@ import tools,layer
 
 def mask_lstm(hyper_params,in_var,mask_var):
     forget_gate,in_gate,cell_gate,out_gate=lstm_params(hyper_params)
-    def recurrence(x_t1,h_t,c_t):
-        xh_t=T.concatenate([x_t1,h_t],axis=0)
-        f_t=T.nnet.sigmoid(forget_gate.linear(xh_t))
-        i_t=T.nnet.sigmoid(in_gate.linear(xh_t))
-        c_t_prop=T.tanh(cell_gate.linear(xh_t))
+    def recurrence(x_t,h_t,c_t):
+        #xh_t=T.concatenate([x_t1,h_t],axis=0)
+        f_t=T.nnet.sigmoid(forget_gate.linear(x_t,h_t))
+        i_t=T.nnet.sigmoid(in_gate.linear(x_t,h_t))
+        c_t_prop=T.tanh(cell_gate.linear(x_t,h_t))
         c_t_next=f_t*c_t+i_t*c_t_prop
-        o_t=T.nnet.sigmoid(out_gate.linear(xh_t))
+        o_t=T.nnet.sigmoid(out_gate.linear(x_t,h_t))
         h_t_next=o_t*T.tanh(c_t_next)
         out_t=T.nnet.softmax(h_t_next)
         return [h_t_next,c_t_next,out_t]
@@ -31,10 +31,10 @@ def lstm_params(hyper_params):
     hidden_dim=hyper_params['hidden_dim']
     cell_dim=hyper_params['cell_dim']
     con_dim=input_dim+hidden_dim
-    forget_gate=layer.create_layer(out_size=cell_dim, in_size=con_dim, name='forgot')
-    in_gate=layer.create_layer(out_size=cell_dim, in_size=con_dim, name='in')
-    cell_gate=layer.create_layer(out_size=cell_dim, in_size=con_dim, name='cell')
-    out_gate=layer.create_layer(out_size=cell_dim, in_size=con_dim, name='out')
+    forget_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim,name='forgot')
+    in_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim,name='in')
+    cell_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim, name='cell')
+    out_gate=layer.create_gate(out_size=cell_dim, x_size=con_dim, h_size=con_dim, name='out')
     return forget_gate,in_gate,cell_gate,out_gate
 
 def default_params():
