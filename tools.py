@@ -9,9 +9,9 @@ np_rng = np.random.RandomState(1234)
 
 def create_shared(out_size, in_size=None, name=None,orth=True):
     if in_size is None:
-        return theano.shared(value=random_initialization((out_size, )), name=name)
+        return theano.shared(value=random_initialization((out_size, )),name=name)
     else:
-        return theano.shared(value=random_initialization((out_size, in_size)), name=name)
+        return theano.shared(value=random_initialization((out_size, in_size)),name=name)
 
 def random_initialization(size):
     return (np_rng.standard_normal(size) * 1. / size[0]).astype(theano.config.floatX)

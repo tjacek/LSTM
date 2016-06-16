@@ -31,7 +31,7 @@ class Gate(object):
         self.b =b
 
     def linear(self,x,h):
-        return T.dot(x,self.w) + T.dot(h,self.u) +self.b
+        return T.dot(x,self.w.T) + T.dot(h,self.u.T) +self.b
 
     def params(self):
         return [self.w,self.u,self.b]

@@ -9,9 +9,9 @@ class RNN(object):
     	              in_var,target_var,
     	              pred,loss,updates):
         self.pred=theano.function([in_var], pred,allow_input_downcast=True,on_unused_input='warn')        
-        #self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
-        #self.updates=theano.function([in_var, target_var], loss, 
-        #                       updates=updates,allow_input_downcast=True)
+        self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
+        self.updates=theano.function([in_var, target_var], loss, 
+                               updates=updates,allow_input_downcast=True)
 
 class MaskRNN(object):
     def __init__(self,hyper_params,
@@ -25,11 +25,19 @@ class MaskRNN(object):
 def build_rnn(hyper_params):
     in_var,target_var,mask_var=init_variables(True)
     s,params=lstm.mask_lstm(hyper_params,in_var,mask_var)
-    p_x= T.mean(s,axis=0)
-    prediction = T.argmax(p_x,axis=1)
-    loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
-    updates=optim.momentum_sgd(loss,hyper_params,params)
-    return MaskRNN(hyper_params,in_var,target_var,mask_var,prediction,loss,updates)
+    pred_y= T.mean(T.mean(s,axis=0),axis=1)
+    loss=T.mean((pred_y - target_var)**2)#)
+    updates= optim.momentum_sgd(loss,hyper_params,params)
+    return RNN(hyper_params,in_var,target_var,pred_y,loss,updates)
+
+#def build_rnn(hyper_params):
+#    in_var,target_var,mask_var=init_variables(True)
+#    s,params=lstm.mask_lstm(hyper_params,in_var,mask_var)
+#    p_x= T.mean(s,axis=0)
+#    prediction = T.argmax(p_x,axis=1)
+#    loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
+#    updates=optim.ada_grad(loss,hyper_params,params)
+#    return MaskRNN(hyper_params,in_var,target_var,mask_var,prediction,loss,updates)
 
 def simple_rnn(hyper_params,in_var):
     U, V, W = init_params(hyper_params)
@@ -83,5 +91,5 @@ def init_hidden_value(hyper_params,var_name='hidden_dim'):
     return T.zeros((hyper_params[var_name],),dtype=float)
 
 def default_params():
-    return {'n_cats':3,'seq_dim':3,'hidden_dim':3,
+    return {'n_cats':3,'seq_dim':2,'hidden_dim':3,
             'learning_rate':0.1,'momentum':0.9}
