@@ -52,5 +52,5 @@ def create_gate(out_size,x_size,h_size,name="layer"):
 def get_params(layers):
     params=[]
     for layer_i in layers:
-        params=layer_i.params()
+        params+=layer_i.params()
     return params    
