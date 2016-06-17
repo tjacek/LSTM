@@ -23,8 +23,9 @@ class LSTMBuilder(object):
         return step
         
     def get_output(self,in_var):
-        start_cell=T.zeros( (in_var.shape[1], self.hyper_params['cell_dim']),dtype=float)
-        start_hidden=T.zeros( (in_var.shape[1],self.hyper_params['hidden_dim']), dtype=float)
+        #start_cell=T.zeros( (in_var.shape[1], self.hyper_params['cell_dim']),dtype=float)
+        #start_hidden=T.zeros( (in_var.shape[1],self.hyper_params['hidden_dim']), dtype=float)
+        start_cell,start_hidden=self.init_outputs(in_var)
         rec_step=self.get_step()
         [h,c], updates = theano.scan(
             rec_step,
@@ -33,9 +34,40 @@ class LSTMBuilder(object):
             n_steps=in_var.shape[0])
         return h
 
+    def init_outputs(self,in_var):
+        cell_dim=self.hyper_params['cell_dim']
+        hidden_dim=self.hyper_params['hidden_dim']
+        start_cell=T.zeros( (in_var.shape[1],cell_dim),dtype=float)
+        start_hidden=T.zeros( (in_var.shape[1],hidden_dim), dtype=float)
+        return start_cell,start_hidden
+
     def get_params(self):
         gates=[self.forget_gate,self.in_gate,self.cell_gate,self.out_gate]
         return layer.get_params(gates)
+
+class MaskLSTMBuilder(LSTMBuilder):
+    def __init__(self, hyper_params):
+        super(ClassName, self).__init__(hyper_params)
+        #self.arg = arg
+    
+    def get_step(self):
+        old_step=super.get_step()
+        def step(x_t,m_t,h_t,c_t):
+            [h_t_next,c_t_next]=old_step(x_t,h_t,c_t)
+            masked_cell = T.switch(m_t, c_t, c_t_next)
+            masked_hid = T.switch(m_t, h_t, h_t_next)
+            return [masked_hid,masked_cell]
+        return step    
+    
+    def get_output(self,in_var,mask_var):
+        
+        rec_step=self.get_step()
+        [h,c], updates = theano.scan(
+            rec_step,
+            sequences=[in_var,mask_var],
+            outputs_info=[start_hidden,start_cell],#,None],
+            n_steps=in_var.shape[0])
+        return h
 
 def lstm_params(hyper_params):
     input_dim=hyper_params['seq_dim']
