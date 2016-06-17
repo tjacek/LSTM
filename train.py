@@ -42,12 +42,15 @@ def train_super(X,y,mask,model,epochs=10000):
             print(xt_i.shape)
             print(y_i.shape)
             print(maskt_i.shape)  
-            value=model.pred(xt_i)#,maskt_i)          
+            #value=model.pred(xt_i)#,maskt_i)
+            value=model.pred(xt_i,maskt_i)            
             print(value.shape)#,maskt_i))
-            
+            print(value)
             #print(value)
-            print(model.loss(xt_i,y_i))#,maskt_i))
-            print(model.updates(xt_i,y_i))#,maskt_i))
+            #print(model.loss(xt_i,y_i))
+            print(model.loss(xt_i,y_i,maskt_i))
+            #print(model.updates(xt_i,y_i))#,maskt_i))
+            print(model.updates(xt_i,y_i,maskt_i))
     return model
 
 def check_model(X,y,model):

@@ -46,19 +46,24 @@ class LSTMBuilder(object):
 
 class MaskLSTMBuilder(LSTMBuilder):
     def __init__(self, hyper_params):
-        super(ClassName, self).__init__(hyper_params)
+        super(MaskLSTMBuilder, self).__init__(hyper_params)
         #self.arg = arg
     
     def get_step(self):
-        old_step=super.get_step()
+        old_step=super(MaskLSTMBuilder, self).get_step()
         def step(x_t,m_t,h_t,c_t):
             [h_t_next,c_t_next]=old_step(x_t,h_t,c_t)
-            masked_cell = T.switch(m_t, c_t, c_t_next)
-            masked_hid = T.switch(m_t, h_t, h_t_next)
+            #mask_t=m_t.reshape((m_t.shape[0],1))
+            mask_t=T.tile(m_t,(c_t.shape[1],1) )
+            mask_t=mask_t.T
+            masked_cell = T.switch(mask_t, c_t, c_t_next)
+            masked_hid = T.switch(mask_t, h_t, h_t_next)
             return [masked_hid,masked_cell]
         return step    
     
-    def get_output(self,in_var,mask_var):
+    def get_output(self,nn_vars):
+        in_var=nn_vars['in_var']
+        mask_var=nn_vars['mask_var']
         start_cell,start_hidden=self.init_outputs(in_var)
         rec_step=self.get_step()
         [h,c], updates = theano.scan(
