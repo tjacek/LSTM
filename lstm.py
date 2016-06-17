@@ -22,9 +22,8 @@ class LSTMBuilder(object):
             return [h_t_next,c_t_next]
         return step
         
-    def get_output(self,in_var):
-        #start_cell=T.zeros( (in_var.shape[1], self.hyper_params['cell_dim']),dtype=float)
-        #start_hidden=T.zeros( (in_var.shape[1],self.hyper_params['hidden_dim']), dtype=float)
+    def get_output(self,nn_vars):
+        in_var=nn_vars['in_var']
         start_cell,start_hidden=self.init_outputs(in_var)
         rec_step=self.get_step()
         [h,c], updates = theano.scan(
@@ -60,7 +59,7 @@ class MaskLSTMBuilder(LSTMBuilder):
         return step    
     
     def get_output(self,in_var,mask_var):
-        
+        start_cell,start_hidden=self.init_outputs(in_var)
         rec_step=self.get_step()
         [h,c], updates = theano.scan(
             rec_step,

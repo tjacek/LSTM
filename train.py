@@ -7,7 +7,7 @@ def test2():
     rnn_model=rnn.build_rnn(lstm.default_params())
     #            xt_i=tools.time_first(x_i)
 
-    train_super(x,y,mask,rnn_model,epochs=100)
+    train_super(x,y,mask,rnn_model,epochs=10)
 
 def test():
     dataset=gen.make_abc(dataset_size=21,seq_size=10)
@@ -30,7 +30,7 @@ def train_super(X,y,mask,model,epochs=10000):
     x_batches=tools.get_batches(X)
     y_batches=tools.get_batches(y)
     mask_batches=tools.get_batches(mask)
-    for i in range(epochs):
+    for j in range(epochs):
         #for x_i,y_i in zip(x_batches,y_batches):
         for i,y_i in enumerate(y_batches):     
             x_i=x_batches[i]
