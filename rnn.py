@@ -24,20 +24,14 @@ class MaskRNN(object):
 
 def build_rnn(hyper_params):
     in_var,target_var,mask_var=init_variables(True)
-    s,params=lstm.mask_lstm(hyper_params,in_var,mask_var)
+    #s,params=lstm.mask_lstm(hyper_params)
+    builder=lstm.LSTMBuilder(hyper_params)
+    s=builder.get_output(in_var)
+    params=builder.get_params()
     pred_y= T.mean(T.mean(s,axis=0),axis=1)
     loss=T.mean((pred_y - target_var)**2)#)
     updates= optim.momentum_sgd(loss,hyper_params,params)
     return RNN(hyper_params,in_var,target_var,pred_y,loss,updates)
-
-#def build_rnn(hyper_params):
-#    in_var,target_var,mask_var=init_variables(True)
-#    s,params=lstm.mask_lstm(hyper_params,in_var,mask_var)
-#    p_x= T.mean(s,axis=0)
-#    prediction = T.argmax(p_x,axis=1)
-#    loss=T.mean(T.nnet.categorical_crossentropy(p_x, target_var))#)
-#    updates=optim.ada_grad(loss,hyper_params,params)
-#    return MaskRNN(hyper_params,in_var,target_var,mask_var,prediction,loss,updates)
 
 def simple_rnn(hyper_params,in_var):
     U, V, W = init_params(hyper_params)

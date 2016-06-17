@@ -2,28 +2,40 @@ import theano, theano.tensor as T
 import numpy as np
 import tools,layer
 
-def mask_lstm(hyper_params,in_var,mask_var):
-    forget_gate,in_gate,cell_gate,out_gate=lstm_params(hyper_params)
-    def recurrence(x_t,h_t,c_t):
-        f_t=T.nnet.sigmoid(forget_gate.linear(x_t,h_t))
-        i_t=T.nnet.sigmoid(in_gate.linear(x_t,h_t))
-        c_t_prop=T.tanh(cell_gate.linear(x_t,h_t))
-        c_t_next=f_t*c_t+i_t*c_t_prop
-        o_t=T.nnet.sigmoid(out_gate.linear(x_t,h_t))
-        h_t_next=o_t*T.tanh(c_t_next)
-        #out_t=T.nnet.softmax(h_t_next)
-        return [h_t_next,c_t_next]#,h_t_next]
-    
-    start_cell=T.zeros( (in_var.shape[1], hyper_params['cell_dim']),dtype=float)
-    start_hidden=T.zeros( (in_var.shape[1],hyper_params['hidden_dim']), dtype=float)
-    [h,c], updates = theano.scan(
-            recurrence,
+class LSTMBuilder(object):
+    def __init__(self,hyper_params):
+        self.hyper_params=hyper_params
+        forget_gate,in_gate,cell_gate,out_gate=lstm_params(hyper_params)
+        self.forget_gate=forget_gate
+        self.in_gate=in_gate
+        self.cell_gate=cell_gate
+        self.out_gate=out_gate
+
+    def get_step(self):
+        def step(x_t,h_t,c_t):
+            f_t=T.nnet.sigmoid(self.forget_gate.linear(x_t,h_t))
+            i_t=T.nnet.sigmoid(self.in_gate.linear(x_t,h_t))
+            c_t_prop=T.tanh(self.cell_gate.linear(x_t,h_t))
+            c_t_next=f_t*c_t+i_t*c_t_prop
+            o_t=T.nnet.sigmoid(self.out_gate.linear(x_t,h_t))
+            h_t_next=o_t*T.tanh(c_t_next)
+            return [h_t_next,c_t_next]
+        return step
+        
+    def get_output(self,in_var):
+        start_cell=T.zeros( (in_var.shape[1], self.hyper_params['cell_dim']),dtype=float)
+        start_hidden=T.zeros( (in_var.shape[1],self.hyper_params['hidden_dim']), dtype=float)
+        rec_step=self.get_step()
+        [h,c], updates = theano.scan(
+            rec_step,
             sequences=in_var,
             outputs_info=[start_hidden,start_cell],#,None],
             n_steps=in_var.shape[0])
-    final= h#mask_var[0][0][0]*h#T.dot(mask_var,s)
-    params=layer.get_params([forget_gate,in_gate,cell_gate,out_gate])
-    return final,params
+        return h
+
+    def get_params(self):
+        gates=[self.forget_gate,self.in_gate,self.cell_gate,self.out_gate]
+        return layer.get_params(gates)
 
 def lstm_params(hyper_params):
     input_dim=hyper_params['seq_dim']
