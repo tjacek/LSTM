@@ -29,15 +29,17 @@ class MaskRNN(object):
 
 def build_rnn(hyper_params):
     nn_vars=init_variables(True)
-    #s,params=lstm.mask_lstm(hyper_params)
     builder=lstm.MaskLSTMBuilder(hyper_params)
-    s=builder.get_output(nn_vars)
+    hidden=builder.get_output(nn_vars)
     params=builder.get_params()
-    pred_y= T.mean(T.mean(s,axis=0),axis=1)
-    target_var=nn_vars['target_var']
-    loss=T.mean((pred_y - target_var)**2)#)
+    pred_y,loss=regresion(hidden,nn_vars['target_var'])
     updates=optim.momentum_sgd(loss,hyper_params,params)
     return MaskRNN(hyper_params,nn_vars,pred_y,loss,updates)
+
+def regresion(hidden,target_var):
+    pred_y= T.mean(T.mean(hidden,axis=0),axis=1)
+    loss=T.mean((pred_y - target_var)**2)#)
+    return pred_y,loss
 
 def init_variables(mask_var=False):
     nn_vars={}
