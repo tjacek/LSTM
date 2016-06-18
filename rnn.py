@@ -24,14 +24,16 @@ class MaskRNN(object):
         mask_var=nn_vars['mask_var']
         self.pred=theano.function([in_var,mask_var], pred,allow_input_downcast=True,on_unused_input='warn')        
         self.loss=theano.function([in_var,target_var,mask_var], loss,allow_input_downcast=True)
-        self.updates=theano.function([in_var, target_var,mask_var], loss, 
-                               updates=updates,allow_input_downcast=True)
+        #self.updates=theano.function([in_var, target_var,mask_var], loss, 
+        #                       updates=updates,allow_input_downcast=True)
 
 class TestRNN(object):
     def __init__(self, hyper_params,nn_vars,pred,loss,updates):
         in_var=nn_vars['in_var']
+        target_var=nn_vars['target_var']
+
         mask_var=nn_vars['mask_var']
-        self.pred=theano.function([in_var,mask_var], pred,allow_input_downcast=True,on_unused_input='warn')     
+        self.pred=theano.function([in_var,mask_var,target_var], pred,allow_input_downcast=True,on_unused_input='warn')     
 
 def build_rnn(hyper_params):
     nn_vars=init_variables(True)
@@ -41,7 +43,7 @@ def build_rnn(hyper_params):
     #pred_y,loss=regresion(hidden,nn_vars['target_var'])
     pred_y,loss=prob(hidden,nn_vars['target_var'],hyper_params,params)
     updates=None#optim.momentum_sgd(loss,hyper_params,params)
-    return TestRNN(hyper_params,nn_vars,pred_y,loss,updates)
+    return MaskRNN(hyper_params,nn_vars,pred_y,loss,updates)
 
 def regresion(hidden,target_var):
     pred_y= T.mean(T.mean(hidden,axis=0),axis=1)
@@ -51,17 +53,16 @@ def regresion(hidden,target_var):
     return pred_y,loss
 
 def prob(hidden,y,hyper_params,params):
-    softmax_layer=layer.create_softmax(hyper_params)
-    #new_
-    #hidden_flat=T.reshape(hidden, (hidden.shape[0]*hidden.shape[1],hidden.shape[2]), ndim=2)
-    p_x=hidden#softmax_layer.linear(hidden)
-    #loss=T.nnet.categorical_crossentropy(y, o),loss,updates
-    return p_x,None#loss
+    p_x=hidden
+    y_hot=T.extra_ops.to_one_hot(y,p_x.shape[2])
+    y_full=T.tile(y_hot, (p_x.shape[0],1,1) )
+    loss=T.nnet.categorical_crossentropy( p_x,y_full)#,loss,updates
+    return p_x,loss
 
 def init_variables(mask_var=False):
     nn_vars={}
     nn_vars['in_var'] = T.ltensor3('in_var')
-    nn_vars['target_var'] = T.lvector('target_var')
+    nn_vars['target_var'] = T.ivector('target_var')
     if(mask_var):
         nn_vars['mask_var']= T.lmatrix('mask_var')
     return nn_vars	
