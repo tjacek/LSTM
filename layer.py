@@ -4,25 +4,27 @@ import tools
 
 class Layer(object):
 
-    def __init__(self, hyper_params,W,b, activation=T.nnet.sigmoid):
-        self.hyper_params = hyper_params
+    def __init__(self,W,b, activation=T.nnet.sigmoid):
+        #self.hyper_params = hyper_params
         self.w=W
         self.b=b
         self.activation  = activation
 
     def linear(self,x):
-        return T.dot(x,self.w)+self.b
+        return T.dot(x,self.w.T)+self.b
 
     def params(self):
         return [self.w,self.b]
 
-    def activate(self, x):
-        if x.ndim > 1:
-            return self.activation(
-                T.dot(self.linear_matrix, x.T) + self.bias_matrix[:,None] ).T
-        else:
-            return self.activation(
-                T.dot(self.linear_matrix, x) + self.bias_matrix )
+    def non_linear(self,x):
+        return self.activation(self.linear(x))
+    #def activate(self, x):
+    #    if x.ndim > 1:
+    #        return self.activation(
+    #            T.dot(self.linear_matrix, x.T) + self.bias_matrix[:,None] ).T
+    #    else:
+    #        return self.activation(
+    #            T.dot(self.linear_matrix, x) + self.bias_matrix )
 
 class Gate(object):
     def __init__(self,w,u,b):
@@ -48,6 +50,13 @@ def create_gate(out_size,x_size,h_size,name="layer"):
     bias_matrix   = tools.create_shared(out_size, name="b_"+name)
     #hyper_params={'hidden_size':out_size,'input_size':in_size}
     return Gate(x_matrix,h_matrix,bias_matrix)
+
+def create_softmax(hyper_params):
+    hidden_size=hyper_params['hidden_dim']
+    n_cats=hyper_params['n_cats']
+    W=tools.create_shared(out_size=n_cats,in_size=hidden_size,name="W_softmax")
+    b=tools.create_shared(out_size=n_cats ,name="b_softmax")
+    return Layer(W,b, activation=T.nnet.softmax)
 
 def get_params(layers):
     params=[]
