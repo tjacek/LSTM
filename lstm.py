@@ -16,7 +16,7 @@ class LSTMBuilder(object):
 
     def get_step(self):
         if(self.softmax_layer==None):
-            def step(x_t,h_t,c_t):
+            def step(x_t,h_t,c_t,o_t):
                 f_t=T.nnet.sigmoid(self.forget_gate.linear(x_t,h_t))
                 i_t=T.nnet.sigmoid(self.in_gate.linear(x_t,h_t))
                 c_t_prop=T.tanh(self.cell_gate.linear(x_t,h_t))
@@ -25,7 +25,7 @@ class LSTMBuilder(object):
                 h_t_next=o_t*T.tanh(c_t_next)
                 return [h_t_next,c_t_next,h_t_next]
         else:
-            def step(x_t,h_t,c_t):
+            def step(x_t,h_t,c_t,o_t):
                 f_t=T.nnet.sigmoid(self.forget_gate.linear(x_t,h_t))
                 i_t=T.nnet.sigmoid(self.in_gate.linear(x_t,h_t))
                 c_t_prop=T.tanh(self.cell_gate.linear(x_t,h_t))
@@ -51,13 +51,11 @@ class LSTMBuilder(object):
     def init_outputs(self,in_var):
         cell_dim=self.hyper_params['cell_dim']
         hidden_dim=self.hyper_params['hidden_dim']
+        n_cats=self.hyper_params['n_cats']
         start_cell=T.zeros( (in_var.shape[1],cell_dim),dtype=float)
         start_hidden=T.zeros( (in_var.shape[1],hidden_dim), dtype=float)
-        #if(self.softmax_layer!=None):
-        #    init_out=[start_cell,start_hidden,None]
-        #else:
-        #    print("Test")
-        init_out=[start_cell,start_hidden,None]
+        start_cats=T.zeros((in_var.shape[1],n_cats), dtype=float)
+        init_out=[start_cell,start_hidden,dict(initial=start_cats, taps=[-1])]
         return init_out
 
     def get_params(self):
@@ -73,15 +71,15 @@ class MaskLSTMBuilder(LSTMBuilder):
     
     def get_step(self):
         old_step=super(MaskLSTMBuilder, self).get_step()
-        def step(x_t,m_t,h_t,c_t):
-            [h_t_next,c_t_next,out_t_next]=old_step(x_t,h_t,c_t)
+        def step(x_t,m_t,h_t,c_t,o_t):
+            [h_t_next,c_t_next,out_t_next]=old_step(x_t,h_t,c_t,o_t)
             #mask_t=m_t.reshape((m_t.shape[0],1))
             mask_t=T.tile(m_t,(c_t.shape[1],1) )
             mask_t=mask_t.T
             masked_cell = T.switch(mask_t, c_t, c_t_next)
             masked_hid = T.switch(mask_t, h_t, h_t_next)
-            #masked_out = T.switch(mask_t, h_t, h_t_next)
-            return [masked_hid,masked_cell,out_t_next]
+            masked_out = T.switch(mask_t, o_t, out_t_next)
+            return [masked_hid,masked_cell,masked_out]
         return step    
     
     def get_output(self,nn_vars):
@@ -108,5 +106,5 @@ def lstm_params(hyper_params):
     return forget_gate,in_gate,cell_gate,out_gate
 
 def default_params():
-    return {'n_cats':2,'seq_dim':2,'hidden_dim':3,
+    return {'n_cats':3,'seq_dim':2,'hidden_dim':3,
             'cell_dim':3,'learning_rate':0.1,'momentum':0.9}
