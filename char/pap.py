@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import codecs,re
-#import char    
+import numpy as np    
 
 def read_notes(filename,min_size=100):
     txt = codecs.open(filename,'r','utf8')
@@ -8,7 +8,9 @@ def read_notes(filename,min_size=100):
     notes=re.split(u'#[0-9]+',txt)
     long_notes=[ note_i for note_i in notes
                   if len(note_i)>min_size]
-    return long_notes
+    clean_notes=[ clean(note_i)
+                  for note_i in long_notes]
+    return clean_notes
 
 def clean(txt):
     allowed_chars=u'[(a-z)|ż|ź|ć|ź|ś|ń|ó|ł|ą|ę]+'
@@ -18,7 +20,22 @@ def clean(txt):
 def get_lengths(y):
     return [len(y_i) for y_i in y]
 
-note=read_notes('pap.txt')[0]
-print(note)
-print(clean(note))
+def select_samples(notes,samples_size=100):
+    if(samples_size>len(notes)):
+        sample_size=len(notes)	
+    samples=[]
+    index=np.random.randint(0,len(notes))
+    while(len(samples)<samples_size):
+        sample_i=extract_sample(notes[index])	
+        samples.append(sample_i)
+        del notes[index]
+    return samples	
+
+def extract_sample(sample,max_size=100):
+    return sample[0:max_size+1]
+
+notes=read_notes('pap.txt')
+print(notes[1])
+samples=select_samples(notes)
+print(samples[0])
 
