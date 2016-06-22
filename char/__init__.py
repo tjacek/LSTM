@@ -13,6 +13,14 @@ def make_pap_dataset(filename='pap.txt'):
     print(y.shape)
     return x,y
 
+def seq_to_words(seq):
+    word=u''
+    for seq_i in seq:
+        index=np.argmax(seq_i)
+        token_i=ALPHA[index]
+        word+=token_i
+    return word
+
 def lines_to_next(lines): 
     pairs=[ next_char(line_i) for line_i in lines]
     x_raw=[pair_i[0] for pair_i in pairs]
@@ -46,4 +54,4 @@ def index_to_vector(i):
     vec_i[i]=1.0
     return vec_i
 
-make_pap_dataset()
+#make_pap_dataset()
