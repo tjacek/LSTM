@@ -1,3 +1,4 @@
+import sys
 import rnn,char,gen_seq
 
 def generate_note(n,seed='polska'):
@@ -16,4 +17,6 @@ def read_lstm(filename='models/lstm'):
     return rnn_model
 
 if __name__ == "__main__":
-    print(generate_note(1000,seed='polska'))
+    n=int(sys.argv[1])
+    seed=sys.argv[2]
+    print(generate_note(n,seed))
