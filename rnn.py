@@ -1,8 +1,8 @@
 import theano
 import theano.tensor as T
-import numpy as np 
-import tools,optim,layer
-import lstm
+import numpy as np
+import pickle
+import lstm,tools,optim,layer
 
 class RNN(object):
     def __init__(self,hyper_params,
@@ -16,13 +16,25 @@ class RNN(object):
         self.loss=theano.function([in_var,target_var], loss,allow_input_downcast=True)
         self.updates=theano.function([in_var, target_var], loss, 
                                updates=updates,allow_input_downcast=True)
-        self.get_params()
 
-    def get_params(self):
-        param_value=[ (param_i.name,param_i.get_value()) 
+    def get_params_values(self):
+        param_values=[ (param_i.name,param_i.get_value()) 
                  for param_i in self.params]
-        #print(names)
-        return dict(param_value)
+        return dict(param_values)
+
+    def set_params(self,values):
+        for param_i in self.params:
+            value_i=values[param_i.name]
+            param_i.set_value(value_i)
+  
+    def save(self,filename):
+        params=self.get_params_values()
+        pickle.dump(params,open(filename, "wb" ))
+
+    def read(self,filename):
+        with open(filename, 'rb') as handle:
+             values = pickle.load(handle)
+             self.set_params(values)
 
 class MaskRNN(object):
     def __init__(self,hyper_params,
