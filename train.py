@@ -1,64 +1,73 @@
 import numpy as np
 import rnn,gen,tools,lstm
 import gen.add
+import char,gen_seq
 
-def test2():
-    x,y,mask=gen.add.gen_dataset(100,min_length=20,max_length=50)
-    rnn_model=rnn.build_rnn(lstm.default_params())
-    #            xt_i=tools.time_first(x_i)
-
-    train_super(x,y,mask,rnn_model,epochs=10)
-
-def test():
-    dataset=gen.make_abc(dataset_size=21,seq_size=10)
-    y=np.array(get_dim(dataset,dim=0))
-    #X=np.array(get_dim(dataset,dim=1))
-    X=get_dim(dataset,dim=1)
-    X,mask=tools.masked_dataset(X)
-    print(mask.shape)
-    print("dataset created")
-    rnn_model=rnn.build_rnn(lstm.default_params())
-    print("model created")
-    train_super(X,y,mask,rnn_model)
-    print("train")
-    #check_model(X,y,rnn_model)
+def pap():
+    X,y=char.make_pap_dataset('char/pap.txt')
+    n_chars=len(char.ALPHA)
+    pap_params={'n_cats':n_chars,'seq_dim':n_chars,'hidden_dim':3*n_chars,
+            'cell_dim':3*n_chars,'learning_rate':0.1,'momentum':0.9}
+    rnn_model=rnn.build_rnn(pap_params)
+    rnn_model.read('models/lstm300')
+    train_super(X,y,rnn_model,200)
+    rnn_model.save('models/lstm300')
 
 def get_dim(dataset,dim=0):
     return [pair_i[dim] for pair_i in dataset]
 
-def train_super(X,y,mask,model,epochs=10000):
+def train_char(X,y,model):
+    x_batches=tools.get_batches(X)
+    y_batches=tools.get_batches(y)
+    for i,y_i in enumerate(y_batches): 
+        x_i=x_batches[i]
+        xt_i=tools.time_first(x_i)
+        yt_i=tools.time_first(y_i)
+
+        value=model.pred(xt_i)#,y_i.astype(int))            
+        print('p_x')
+        print(value.shape)
+        print(yt_i.shape)
+        yt_i=tools.to_one_hot(yt_i,xt_i.shape[2])
+        print(model.loss(xt_i,yt_i))
+        print(model.updates(xt_i,yt_i))
+
+
+def show_output(X,y,mask,model):
     x_batches=tools.get_batches(X)
     y_batches=tools.get_batches(y)
     mask_batches=tools.get_batches(mask)
-    for j in range(epochs):
-        #for x_i,y_i in zip(x_batches,y_batches):
-        for i,y_i in enumerate(y_batches):     
-            x_i=x_batches[i]
-            #print(x_i.shape)
-            xt_i=tools.time_first(x_i)
-            mask_i=mask_batches[i]
-            maskt_i=tools.time_first(mask_i)
-            print("#################")
-            print(xt_i.shape)
-            print(y_i.shape)
-            print(maskt_i.shape)  
-            #value=model.pred(xt_i)#,maskt_i)
-            value=model.pred(xt_i,maskt_i)            
-            print(value.shape)#,maskt_i))
-            print(value)
-            #print(value)
-            #print(model.loss(xt_i,y_i))
-            print(model.loss(xt_i,y_i,maskt_i))
-            #print(model.updates(xt_i,y_i))#,maskt_i))
-            print(model.updates(xt_i,y_i,maskt_i))
-    return model
+    for i,y_i in enumerate(y_batches): 
+        x_i=x_batches[i]
+        xt_i=tools.time_first(x_i)
+        mask_i=mask_batches[i]
+        maskt_i=tools.time_first(mask_i)
+        #y_i=y_i.reshape((1,5))
+        value=model.pred(xt_i,maskt_i)#,y_i.astype(int))            
+        print(value.shape)
+        print(y_i.shape)
+        print(model.loss(xt_i,y_i.astype(int) ,maskt_i))
+        print(model.updates(xt_i,y_i,maskt_i))
+    
 
-def check_model(X,y,model):
+def train_super(X,y,model,epochs=100):
     x_batches=tools.get_batches(X)
     y_batches=tools.get_batches(y)
-    for i,y_i in enumerate(y_batches):
-        xt_i=tools.time_first(x_batches[i])
-        y_pred=model.pred(xt_i)
-        print(y_i==y_pred) 
+    for j in range(epochs):
+        cost=[]
+        for i,y_i in enumerate(y_batches):     
+            x_i=x_batches[i]
+            xt_i=tools.time_first(x_i)
+            yt_i=tools.time_first(y_i)
+            value=model.pred(xt_i)#,y_i.astype(int))            
+            yt_i=tools.to_one_hot(yt_i,xt_i.shape[2])
+            cost_i=model.updates(xt_i,yt_i)
+            cost.append(cost_i)
+        sum_i=sum(cost)/float(len(cost))
+        print(str(j) + ' ' + str(sum_i))
+        rnn_model.save('models/lstm271')
+    seq_m=gen_seq.gen_seq(100,model)
+    print(char.seq_to_words(seq_m))
+    return model
 
-test2()
+pap()
