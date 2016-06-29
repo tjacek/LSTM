@@ -5,7 +5,6 @@ import tools
 class Layer(object):
 
     def __init__(self,W,b, activation=T.nnet.sigmoid):
-        #self.hyper_params = hyper_params
         self.w=W
         self.b=b
         self.activation  = activation
@@ -18,13 +17,6 @@ class Layer(object):
 
     def non_linear(self,x):
         return self.activation(self.linear(x))
-    #def activate(self, x):
-    #    if x.ndim > 1:
-    #        return self.activation(
-    #            T.dot(self.linear_matrix, x.T) + self.bias_matrix[:,None] ).T
-    #    else:
-    #        return self.activation(
-    #            T.dot(self.linear_matrix, x) + self.bias_matrix )
 
 class Gate(object):
     def __init__(self,w,u,b):
